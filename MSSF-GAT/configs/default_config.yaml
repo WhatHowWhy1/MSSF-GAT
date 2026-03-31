@@ -1,0 +1,204 @@
+project:
+  name: "ModelSet_GAT_Project"
+  random_seed: 42
+  device: "cuda"   # 可选: cuda / cpu
+
+paths:
+  project_root: "C:/Users/Administrator/Desktop/ModelSet_GAT_Project"
+  raw_data_root: "C:/Users/Administrator/Desktop/ModelSet_GAT_Project/data/raw/modelset/modelset"
+
+  ecore_output_root: "C:/Users/Administrator/Desktop/ModelSet_GAT_Project/data/ecore"
+  uml_output_root: "C:/Users/Administrator/Desktop/ModelSet_GAT_Project/data/uml"
+
+  ecore_filtered_dir: "C:/Users/Administrator/Desktop/ModelSet_GAT_Project/data/ecore/01_filtered_metadata"
+  ecore_extracted_dir: "C:/Users/Administrator/Desktop/ModelSet_GAT_Project/data/ecore/02_extracted_csv"
+  ecore_cleaned_dir: "C:/Users/Administrator/Desktop/ModelSet_GAT_Project/data/ecore/03_cleaned_csv"
+  ecore_split_dir: "C:/Users/Administrator/Desktop/ModelSet_GAT_Project/data/ecore/04_split"
+  ecore_features_dir: "C:/Users/Administrator/Desktop/ModelSet_GAT_Project/data/ecore/05_features"
+  ecore_pyg_dir: "C:/Users/Administrator/Desktop/ModelSet_GAT_Project/data/ecore/06_pyg_dataset"
+
+  uml_filtered_dir: "C:/Users/Administrator/Desktop/ModelSet_GAT_Project/data/uml/01_filtered_metadata"
+  uml_extracted_dir: "C:/Users/Administrator/Desktop/ModelSet_GAT_Project/data/uml/02_extracted_csv"
+  uml_cleaned_dir: "C:/Users/Administrator/Desktop/ModelSet_GAT_Project/data/uml/03_cleaned_csv"
+  uml_split_dir: "C:/Users/Administrator/Desktop/ModelSet_GAT_Project/data/uml/04_split"
+  uml_features_dir: "C:/Users/Administrator/Desktop/ModelSet_GAT_Project/data/uml/05_features"
+  uml_pyg_dir: "C:/Users/Administrator/Desktop/ModelSet_GAT_Project/data/uml/06_pyg_dataset"
+
+dataset:
+  supported_datasets: ["ecore", "uml"]
+  active_dataset: "ecore"   # 运行时可切换为 ecore 或 uml
+
+  # 从 metadata 中筛选样本
+  filter_language: "English"
+  require_at_least_one_tag: true
+  keep_category_field: true
+
+graph_build:
+  source_type: "graph_json"   # 第一版先用 graph/*.json
+  use_edge_type: true
+  default_edge_type: "generic_link"
+
+  nodes_csv_columns:
+    - "node_global_id"
+    - "graph_id"
+    - "node_type"
+    - "node_name"
+    - "is_name_missing"
+
+  edges_csv_columns:
+    - "graph_id"
+    - "src_global_id"
+    - "dst_global_id"
+    - "edge_type"
+
+  graphs_csv_columns:
+    - "graph_id"
+    - "num_nodes"
+    - "category"
+    - "tags"
+
+tag_cleaning:
+  lowercase: true
+  strip_whitespace: true
+  replace_hyphen_with_space: false
+  remove_empty_tags: true
+
+  # 低频标签处理
+  min_tag_frequency: 20
+  drop_tags_below_min_freq: true
+
+  # 是否启用手工映射表合并标签
+  use_manual_tag_merge: true
+  manual_tag_merge_file: ""
+
+  # 是否启用简单单复数归一化
+  normalize_plural_simple: false
+
+split:
+  train_ratio: 0.72
+  val_ratio: 0.08
+  test_ratio: 0.20
+
+  strategy: "iterative_stratification"   # 多标签分层抽样
+  shuffle: true
+  random_seed: 42
+
+labels:
+  task_type: "multilabel_graph_classification"
+  label_source_column: "tags"
+  save_tag_vocab: true
+
+features:
+  # 当前要构建/使用哪一种节点特征
+  # 可选:
+  # - type
+  # - name
+  # - merged
+  # - joint_text
+  active_feature_type: "joint_text"  ## merged或者joint_text
+
+  # 这些布尔开关保留，方便你单独生成各种特征文件
+  use_node_type_feature: true
+  use_node_name_feature: true
+  use_merged_feature: false  ## false
+  use_joint_text_feature: true ## true
+
+  node_type_feature:
+    method: "one_hot"
+
+  node_name_feature:
+    encoder_name: "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    batch_size: 64
+    normalize_embeddings: true
+    reduced_dim: 64
+    reduction_method: "pca"
+    missing_name_strategy: "zero_vector"
+    special_missing_token: "[MISSING]"
+    text_lowercase: false
+    replace_underscore_with_space: true
+    split_camel_case: true
+
+  merged_feature:
+    method: "concat"
+    type_scale: 1.0
+    name_scale: 1.0
+
+  joint_text_feature:
+    encoder_name: "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    batch_size: 64
+    normalize_embeddings: true
+    reduced_dim: 64
+    reduction_method: "pca"
+    missing_name_token: "[MISSING]"
+    text_lowercase: false
+    replace_underscore_with_space: true
+    split_camel_case: true
+    text_template: "name: {name}; type: {type}"
+
+
+# model:
+#   name: "WideDeepGCN"
+#   hidden_dim: 256
+#   num_gcn_layers: 1
+#   dropout: 0.2
+#   mlp_hidden_dim: 256
+
+# model:
+#   name: "WideDeepGAT"
+#   hidden_dim: 64
+#   num_gat_layers: 2
+#   gat_heads: 4
+#   dropout: 0.3
+#   mlp_hidden_dim: 128
+
+# model:
+#   name: "JointTextGAT"
+#   hidden_dim: 64
+#   num_gat_layers: 2
+#   gat_heads: 4
+#   dropout: 0.3
+#   mlp_hidden_dim: 128
+#   use_raw_readout: true
+
+model:
+  name: "JointTextGATv2"
+  hidden_dim: 256
+  num_gat_layers: 1
+  gat_heads: 1
+  dropout: 0.0
+  mlp_hidden_dim: 256
+  use_raw_readout: true
+
+# model:
+#   name: "JointTextGCN"
+#   hidden_dim: 64
+#   num_gcn_layers: 2
+#   dropout: 0.3
+#   mlp_hidden_dim: 128
+
+train:
+  batch_size: 32
+  lr: 0.004089
+  weight_decay: 2.9376977049225005e-07
+  num_epochs: 100
+  threshold_candidates: [0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5]
+  max_pos_weight: 5.0
+  early_stopping_patience: 8
+  early_stopping_min_delta: 0.0001
+
+pyg_dataset:
+  save_train_dataset: true
+  save_val_dataset: true
+  save_test_dataset: true
+  save_full_dataset: false
+
+logging:
+  level: "INFO"
+  save_logs: true
+  log_dir: "C:/Users/Administrator/Desktop/ModelSet_GAT_Project/logs"
+
+checkpoints:
+  save_dir: "C:/Users/Administrator/Desktop/ModelSet_GAT_Project/checkpoints"
+
+results:
+  save_dir: "C:/Users/Administrator/Desktop/ModelSet_GAT_Project/results"

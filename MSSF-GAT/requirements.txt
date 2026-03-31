@@ -1,0 +1,33 @@
+# --- Deep Learning & NLP Core ---
+torch==2.8.0
+torchvision==0.23.0
+torch-geometric==2.6.1
+torch_scatter==2.1.2
+transformers==4.57.6
+sentence-transformers==5.1.2
+gensim==4.4.0
+huggingface_hub==0.36.2
+modelset-py==0.2.1
+
+# --- Machine Learning & Data Science ---
+scikit-learn==1.6.1
+numpy==2.0.2
+pandas==2.3.3
+scipy==1.13.1
+networkx==3.2.1
+iterative-stratification==0.1.9
+
+# --- Visualization ---
+matplotlib==3.9.4
+pillow==11.3.0
+
+# --- Hyperparameter Tuning & Utilities ---
+optuna
+tqdm
+PyYAML
+requests==2.32.5
+wget==3.2
+
+# --- Database / Storage ---
+SQLAlchemy
+alembic
