@@ -295,6 +295,7 @@ The proposed **MS²F-GAT** consistently outperforms or matches strong baselines 
 ## 15. Acknowledgement
 
 This project is built on top of the **ModelSet** dataset and related tooling from the model-driven engineering community.
+Link to the original paper on modelset：https://github.com/modelset/modelset-dataset
 
 ---
 
